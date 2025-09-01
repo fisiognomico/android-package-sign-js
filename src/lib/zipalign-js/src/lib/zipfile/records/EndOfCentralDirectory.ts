@@ -73,7 +73,7 @@ export class EndOfCentralDirectory {
       numberOfCentralDirectoryRecords,
       centralDirectorySize,
       centralDirectoryOffset,
-      comment,
+      comment as ArrayBuffer,
     );
   }
 }

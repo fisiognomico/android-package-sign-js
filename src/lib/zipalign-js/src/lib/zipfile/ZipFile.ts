@@ -39,7 +39,7 @@ export class ZipFile {
 
     //TODO(andreban): Read **actual** LocalFile and use that to calculate offset!
     const offset = this.offsets[position] + 30 + encodedName.byteLength;
-    return this.data.buffer.slice(offset, offset + zipentry.compressedSize);
+    return this.data.buffer.slice(offset, offset + zipentry.compressedSize) as ArrayBuffer;
   }
 
   private static seekCentralDirectoryEnd(dataview: DataView): number {

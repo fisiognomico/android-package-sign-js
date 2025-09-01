@@ -92,8 +92,8 @@ export class LocalFileHeader {
       crc32,
       compressedSize,
       uncompressedSize,
-      fileName,
-      extra,
+      fileName as ArrayBuffer,
+      extra as ArrayBuffer,
     );
   }
 }

@@ -59,7 +59,7 @@ export class ZipWriter {
       entry.crc32,
       entry.compressedSize,
       entry.uncompressedSize,
-      encoder.encode(entry.filename),
+      encoder.encode(entry.filename).buffer,
       entry.extra,
     );
 
@@ -83,9 +83,9 @@ export class ZipWriter {
         0, // internalFileAttributes
         32, // externalFileAttributes
         startoffset,
-        encoder.encode(entry.filename),
+        encoder.encode(entry.filename).buffer,
         entry.extra,
-        encoder.encode(entry.comment),
+        encoder.encode(entry.comment).buffer,
       ),
     );
 
@@ -113,10 +113,10 @@ export class ZipWriter {
       this.entries.length,
       centralDirectorySize,
       centralDirectoryStart,
-      new TextEncoder().encode(this.comment),
+      new TextEncoder().encode(this.comment).buffer,
     );
 
-    await this.writeData(Buffer.from(await endOfCentryDirectory.write()));
+    await this.writeData(Buffer.from(await endOfCentryDirectory.write()).buffer);
     await this.closeWriter();
     this.finished = true;
   }

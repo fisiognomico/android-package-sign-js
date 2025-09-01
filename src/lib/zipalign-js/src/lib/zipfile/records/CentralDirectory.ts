@@ -83,7 +83,7 @@ export class CentralDirectory implements ZipEntry {
       new Uint8Array(this.rawComment),
       SIZE + this.rawFilename.byteLength + this.extra.byteLength,
     );
-    return buffer;
+    return buffer.buffer;
   }
 
   static parse(buffer: DataView, offset: number): CentralDirectory {
@@ -130,9 +130,9 @@ export class CentralDirectory implements ZipEntry {
       internalFileAttributes,
       externalFileAttributes,
       relativeLocalFileHeaderOffset,
-      fileName,
-      extra,
-      comment,
+      fileName as ArrayBuffer,
+      extra as ArrayBuffer,
+      comment as ArrayBuffer,
     );
   }
 }
