@@ -72,7 +72,7 @@ export class Zip {
    * @returns The Zip class.
    */
   static async loadAsync(zipBlob: Blob): Promise<Zip> {
-    const zipFile = await JSZip.loadAsync(zipBlob);
+    const zipFile = await JSZip.loadAsync(zipBlob, {createFolders: false});
     return new Zip(zipFile);
   }
 
@@ -142,8 +142,7 @@ export class Zip {
   async exportZipAsBase64(): Promise<string> {
     const preZipAlign = await this.zip.generateAsync({
       type: 'arraybuffer',
-      compression: 'DEFLATE',
-      compressionOptions: { level: 5 },
+      compression: 'STORE',
     });
 
     const postZipAlign = await this.alignZip(preZipAlign);
@@ -157,16 +156,52 @@ export class Zip {
    * @returns a zip Blob.
    */
   private async alignZip(zipBuffer: ArrayBuffer): Promise<Blob> {
+    const zip = new JSZip();
+    await zip.loadAsync(zipBuffer, {createFolders: false});
+
+    // Process all non-library files to calculate offsets
+    // The files are ordered to have libraries adjacent, which optimizes
+    // page alignment.
+    const allFiles = Object.keys(zip.files)
+      .filter(path => !zip.files[path].dir)
+      .sort((a,b) => a.localeCompare(b));
+
+    for (const path of allFiles) {
+      const file = zip.file(path);
+      if (!file) continue;
+
+      const isLib: boolean = path.startsWith("lib/") && path.endsWith(".so");
+      // Fix PM error : Targeting R+ (version 30 and above) requires the
+      // resources.arsc of installed APKs to be stored uncompressed and
+      // aligned on a 4-byte boundary
+      const isArsc: boolean = path === "resources.arsc"
+      const dontCompress: boolean = isLib || isArsc;
+
+      const data = file.async('uint8array');
+
+      // Libraries will be stored uncompressed
+      const options:  JSZip.JSZipFileOptions = {
+        compression: dontCompress ? 'STORE' : 'DEFLATE',
+        createFolders: false,
+      };
+      // Just copy the data, the alignment will be managed by
+      // AlignedZipWriter
+      zip.file(path, data, options);
+    }
+
     const chunks: Buffer[] = [];
     const outStream = new WritableStream({
       write: (chunk) => {
         chunks.push(chunk);
       },
     });
-    const zipFile = await ZipFile.open(zipBuffer);
+    const newBuffer = await zip.generateAsync({
+      type: 'arraybuffer',
+      compression: 'STORE',
+    });
+    const zipFile = await ZipFile.open(newBuffer);
     const zipWriter = new AlignedZipWriter(outStream);
     await zipalign(zipFile, zipWriter);
-
     return new Blob(chunks);
   }
 

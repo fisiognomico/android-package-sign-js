@@ -24,6 +24,7 @@ export class AlignedZipWriter extends ZipWriter {
   }
 
   async write(entry: ZipEntry, data: ArrayBuffer): Promise<void> {
+    const PAGE_ALIGNMENT = 4096;
     // No need to align compressed files, so we just invoke the default write.
     if (entry.compressedSize !== entry.uncompressedSize) {
       return super.write(entry, data);
@@ -32,6 +33,8 @@ export class AlignedZipWriter extends ZipWriter {
     const encoder = new TextEncoder();
     const fileNameLength = encoder.encode(entry.filename).length;
     const extraLength = entry.extra.byteLength;
+
+    const isLib = entry.filename.startsWith("lib/") && entry.filename.endsWith(".so");
 
     // Calculate the offset to the start of the date for this record.
     const offset = this.bytesWritten + LocalFileHeader.BASE_SIZE + fileNameLength + extraLength;
@@ -52,7 +55,9 @@ export class AlignedZipWriter extends ZipWriter {
     //  - padding = 2 => 2 % 4 => 2 (stays the same)
     //  - padding = 4 => 4 % 4 => 0 (changes padding to 0)
     //
-    const padding = (this.alignment - (offset % this.alignment)) % this.alignment;
+
+    const alignment = isLib ? PAGE_ALIGNMENT : this.alignment;
+    const padding = (alignment - (offset % alignment)) % alignment;
 
     // No padding is required, so we invoke the default write.
     if (padding === 0) {
