@@ -155,7 +155,7 @@ export class Zip {
    * @param zipBuffer - ArrayBuffer representing a zip file
    * @returns a zip Blob.
    */
-  private async alignZip(zipBuffer: ArrayBuffer): Promise<Blob> {
+  async alignZip(zipBuffer: ArrayBuffer): Promise<Blob> {
     const zip = new JSZip();
     await zip.loadAsync(zipBuffer, {createFolders: false});
 
@@ -208,4 +208,12 @@ export class Zip {
   isPreviouslySigned(): boolean {
     return this.previouslySigned;
   }
+
+  // TODO a better alternative to casting?
+  async generateAsync(options?: JSZip.JSZipGeneratorOptions):
+    Promise<ArrayBuffer>{
+    return await this.zip.generateAsync(options) as ArrayBuffer;
+  }
+
+
 }

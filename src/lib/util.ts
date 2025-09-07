@@ -74,3 +74,47 @@ export function formatAlias(alias: string): string {
   }
   return returnAlias.toUpperCase();
 }
+
+export function readUint32LE(buffer: Uint8Array, offset: number): number {
+  return buffer[offset] |
+         (buffer[offset + 1] << 8) |
+         (buffer[offset + 2] << 16) |
+         (buffer[offset + 3] << 24);
+}
+
+export function writeUint32LE(buffer: Uint8Array, offset: number, value: number): void {
+  buffer[offset] = value & 0xff;
+  buffer[offset + 1] = (value >> 8) & 0xff;
+  buffer[offset + 2] = (value >> 16) & 0xff;
+  buffer[offset + 3] = (value >> 24) & 0xff;
+}
+
+export function uint32ToBytes(value: number): Uint8Array {
+  const buffer = new Uint8Array(4);
+  writeUint32LE(buffer, 0, value);
+  return buffer;
+}
+
+export function uint64ToBytes(value: number): Uint8Array {
+  const buffer = new Uint8Array(8);
+  writeUint32LE(buffer, 0, value & 0xffffffff);
+  writeUint32LE(buffer, 4, Math.floor(value / 0x100000000));
+  return buffer;
+}
+
+export function concatenateArrays(arrays: Uint8Array[]): Uint8Array {
+  const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0);
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+
+  for (const arr of arrays) {
+    result.set(arr, offset);
+    offset += arr.length;
+  }
+
+  return result;
+}
+
+export function arrayBufferToBase64(buffer: Uint8Array): string {
+  return Buffer.from(buffer).toString('base64');
+}

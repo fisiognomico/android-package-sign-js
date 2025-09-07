@@ -15,3 +15,4 @@
  */
 
 export * from './lib/package-signer';
+export * from './lib/apksignerv2';
